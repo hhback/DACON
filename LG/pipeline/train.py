@@ -177,7 +177,7 @@ if __name__ == "__main__":
     clean_X_train_df = pd.read_pickle(os.path.join(current_dir, "refine/clean", "X_train_df.pkl"))
     clean_X_test_df = pd.read_pickle(os.path.join(current_dir, "refine/clean", "X_test_df.pkl"))
     clean_y_train_df = pd.read_pickle(os.path.join(current_dir, "refine/clean", "y_train_df.pkl"))
-    clean_datasets = [noise_X_train_df, noise_y_train_df, noise_X_test_df, ]
+    clean_datasets = [clean_X_train_df, clean_y_train_df, clean_X_test_df, ]
 
     os.makedirs(os.path.join(current_dir, "output"), exist_ok=True) 
     os.makedirs(os.path.join(current_dir, "output", "noise"), exist_ok=True) 
