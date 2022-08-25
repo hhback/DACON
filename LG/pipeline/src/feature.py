@@ -385,21 +385,37 @@ class FourierTransform:
     def __init__(self, X_train, y_train, X_test, scaler, fft):
         
         self.colum_names = X_train.columns.tolist()
+        self.X_train = X_train
+        self.X_test = X_test
         self.y_train = y_train
+        
         self.scaler = scaler
-        self.X_train = self.scaler.fit_transform(X_train)
-        self.X_test = self.scaler.transform(X_test)
+        self.scaled_X_train = self.scaler.fit_transform(X_train)
+        self.scaled_X_test = self.scaler.transform(X_test)
         
         self.fft = fft
     
-    def data_transform(self, data_type="train"):
+    def data_transform(self, data_type="train", _type="scale"):
         
         X = self.X_train
+        scale_X = self.scaled_X_train
         
         if data_type == "test":
-            X = self.X_test   
-            
-        fft_X = self.fft(X).astype("float32")
-        pd_fft_X = pd.DataFrame(fft_X, columns = self.colum_names)
+            X = self.X_test
+            scale_X = self.scaled_X_test
         
-        return pd_fft_X
+        
+        fft_X = self.fft(X).astype("float32")
+        scale_fft_X = self.fft(scale_X).astype("float32")
+        
+        pd_fft_X = pd.DataFrame(fft_X, columns = self.colum_names)
+        pd_fft_X.columns = ["raw_fft_%s" % (col) for col in pd_fft_X.columns.tolist()]
+        
+        pd_scale_fft_X = pd.DataFrame(scale_fft_X, columns = self.colum_names)
+        pd_scale_fft_X.columns = ["scale_fft_%s" % (col) for col in pd_scale_fft_X.columns.tolist()]
+        
+        if _type == "scale":
+            return pd_scale_fft_X
+        
+        else:
+            return pd_fft_X
