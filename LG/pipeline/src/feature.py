@@ -379,3 +379,27 @@ class ByLowPassTransform:
         temp_X.columns = ["lowpass_%s" % (col) for col in temp_X.columns.tolist()]
 
         return temp_X
+
+class FourierTransform:
+    
+    def __init__(self, X_train, y_train, X_test, scaler, fft):
+        
+        self.colum_names = X_train.columns.tolist()
+        self.y_train = y_train
+        self.scaler = scaler
+        self.X_train = self.scaler.fit_transform(X_train)
+        self.X_test = self.scaler.transform(X_test)
+        
+        self.fft = fft
+    
+    def data_transform(self, data_type="train"):
+        
+        X = self.X_train
+        
+        if data_type == "test":
+            X = self.X_test   
+            
+        fft_X = self.fft(X).astype("float32")
+        pd_fft_X = pd.DataFrame(fft_X, columns = self.colum_names)
+        
+        return pd_fft_X

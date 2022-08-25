@@ -153,7 +153,7 @@ def main(args):
         prediction = inference_stacking.run_level1()
         result = prediction.round(3)
 
-        submission = pd.read_csv(os.path.join(current_dir, "open", "sample_submission.csv"))
+        submission = pd.read_csv(os.path.join(upper_dir, "open", "sample_submission.csv"))
 
         for idx, col in enumerate(submission.columns):
             if col == "ID":
@@ -161,26 +161,26 @@ def main(args):
             submission[col] = result[:, idx - 1]
         
         if order == 0:
-            submission.to_csv(os.path.join(current_dir, "output/noise/submission.csv"), index=False)
+            submission.to_csv(os.path.join(upper_dir, "output/noise/submission.csv"), index=False)
         else:
-            submission.to_csv(os.path.join(current_dir, "output/clean/submission.csv"), index=False)
+            submission.to_csv(os.path.join(upper_dir, "output/clean/submission.csv"), index=False)
 
 if __name__ == "__main__":
     
     args = parser()
 
-    noise_X_train_df = pd.read_pickle(os.path.join(current_dir, "refine/noise", "X_train_df.pkl"))
-    noise_X_test_df = pd.read_pickle(os.path.join(current_dir, "refine/noise", "X_test_df.pkl"))
-    noise_y_train_df = pd.read_pickle(os.path.join(current_dir, "refine/noise", "y_train_df.pkl"))
+    noise_X_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise", "X_train_df.pkl"))
+    noise_X_test_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise", "X_test_df.pkl"))
+    noise_y_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise", "y_train_df.pkl"))
     noise_datasets = [noise_X_train_df, noise_y_train_df, noise_X_test_df,]
 
-    clean_X_train_df = pd.read_pickle(os.path.join(current_dir, "refine/clean", "X_train_df.pkl"))
-    clean_X_test_df = pd.read_pickle(os.path.join(current_dir, "refine/clean", "X_test_df.pkl"))
-    clean_y_train_df = pd.read_pickle(os.path.join(current_dir, "refine/clean", "y_train_df.pkl"))
+    clean_X_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean", "X_train_df.pkl"))
+    clean_X_test_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean", "X_test_df.pkl"))
+    clean_y_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean", "y_train_df.pkl"))
     clean_datasets = [clean_X_train_df, clean_y_train_df, clean_X_test_df, ]
 
-    os.makedirs(os.path.join(current_dir, "output"), exist_ok=True) 
-    os.makedirs(os.path.join(current_dir, "output", "noise"), exist_ok=True) 
-    os.makedirs(os.path.join(current_dir, "output", "clean"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "output"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "output", "noise"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "output", "clean"), exist_ok=True) 
 
     main(args)
