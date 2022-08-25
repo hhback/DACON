@@ -4,5 +4,7 @@
 script="`readlink -f "${BASH_SOURCE[0]}"`"
 HOMEDIR="`dirname "$script"`"
 
-python ${HOMEDIR}/preprocess.py
-python ${HOMEDIR}/train.py
+source ${HOMEDIR}/pyenv/bin/activate
+
+python ${HOMEDIR}/src/preprocess.py
+#python ${HOMEDIR}/src/train.py
