@@ -1,6 +1,6 @@
 # 파이프라인 구조 설명
 
-#### 1. Setting Environment
+### 1. Setting Environment
 - python version >= 3.6
 
 1. Make virtual env
@@ -19,7 +19,7 @@ $ (pyenv) sh ./bin/run
 ``` 
 
 
-#### 2. py file
+### 2. py file
 ```
 feature.py : feature engineering class
 model.py : model class
@@ -28,7 +28,7 @@ train.py : train activate code
 utils.py : utils func
 ```
 
-#### 3. requirements.txt
+### 3. requirements.txt
 ```
 numpy
 pandas
