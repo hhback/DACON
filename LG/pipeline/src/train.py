@@ -85,7 +85,7 @@ def parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scaler", default="standard", type=str)
     parser.add_argument('--n_cv', type=int, default=10)
-    parser.add_argument("--mode", type=str, default="real", help="real or test")
+    parser.add_argument("--mode", type=str, default="inference", help="inference or experiment")
 
     return parser.parse_args()
 
@@ -119,6 +119,23 @@ def make_datasets(datasets, scaler, mode, seed):
 
         return X_train, X_test, y_train
 
+def ensemble_clean_noise(clean_path, noise_path, submission_path):
+    
+    clean = pd.read_csv(clean_path)
+    noise = pd.read_csv(noise_path)
+    submission = pd.read_csv(submission_path)
+
+    ensemble_result = np.mean(
+        np.array([clean.iloc[:, 1:].values, noise.iloc[:, 1:].values]), axis=0
+    ).round(3)
+
+    for idx, col in enumerate(submission.columns):
+        if col == "ID":
+            continue
+        submission[col] = ensemble_result[:, idx - 1]
+
+    return submission
+
 def main(args):
 
     n_cv = args.n_cv
@@ -130,40 +147,60 @@ def main(args):
     elif scaler == "minmax":
         scaler = MinMaxScaler()
 
-    base_ml = [bagging, ets, rf, xgboost, catboost, lightgbm]
-    # base_ml = [lr, ridge, lasso]
+    # base_ml = [bagging, ets, rf, xgboost, catboost, lightgbm]
     total_datasets = [noise_datasets, clean_datasets]
 
     for order, datasets in enumerate(total_datasets):
 
-        print("Experiment Start..")
-        X_train, X_test, y_train, y_test = make_datasets(datasets, scaler, "test", seed)
-        experiment_stacking = STACKING(X_train, X_test, y_train, y_test, base_ml, len(base_ml), seed, "test")
-        
-        experiment_stacking.run_level0()
-        _ = experiment_stacking.run_level1()
-        best_ml = experiment_stacking.best_n_ml[: experiment_stacking.final_select_n].tolist()
-        print(experiment_stacking.scores)
+        if mode == "experiment":
 
-        print("Inference Start..")
-        X_train, X_test, y_train = make_datasets(datasets, scaler, "real", seed)
-        inference_stacking = STACKING(X_train, X_test, y_train, y_test, best_ml, len(best_ml), seed, "real")
-        
-        inference_stacking.run_level0()
-        prediction = inference_stacking.run_level1()
-        result = prediction.round(3)
+            print("Experiment Start..")
+            X_train, X_test, y_train, y_test = make_datasets(datasets, scaler, "test", seed)
+            experiment_stacking = STACKING(X_train, X_test, y_train, y_test, base_ml, len(base_ml), seed, "test")
+            
+            experiment_stacking.run_level0()
+            _ = experiment_stacking.run_level1()
+            best_ml = experiment_stacking.best_n_ml[: experiment_stacking.final_select_n].tolist()
+            print(experiment_stacking.scores)
+            # For the noise dataset, it was best to use catboost,
+            # For the clean dataset, it was best to use catboost, lightgbm, and ets.
 
-        submission = pd.read_csv(os.path.join(upper_dir, "open", "sample_submission.csv"))
-
-        for idx, col in enumerate(submission.columns):
-            if col == "ID":
-                continue
-            submission[col] = result[:, idx - 1]
+        elif mode == "inference":
         
-        if order == 0:
-            submission.to_csv(os.path.join(upper_dir, "output/noise/submission.csv"), index=False)
+            if order == 0:
+                best_ml = [catboost]
+            else:
+                best_ml = [catboost, lightgbm, ets,]
+
+            print("Inference Start..")
+            X_train, X_test, y_train = make_datasets(datasets, scaler, "real", seed)
+            inference_stacking = STACKING(X_train, X_test, y_train, "_", best_ml, len(best_ml), seed, "real")
+            
+            inference_stacking.run_level0()
+            prediction = inference_stacking.run_level1()
+            result = prediction.round(3)
+
+            submission = pd.read_csv(os.path.join(upper_dir, "open", "sample_submission.csv"))
+
+            for idx, col in enumerate(submission.columns):
+                if col == "ID":
+                    continue
+                submission[col] = result[:, idx - 1]
+            
+            if order == 0:
+                submission.to_csv(os.path.join(upper_dir, "output/noise/submission.csv"), index=False)
+            else:
+                submission.to_csv(os.path.join(upper_dir, "output/clean/submission.csv"), index=False)
+
         else:
-            submission.to_csv(os.path.join(upper_dir, "output/clean/submission.csv"), index=False)
+            print("You must enter mode as inference or experiment.")
+
+    clean_path = os.path.join(upper_dir, "output/clean/submission.csv")
+    noise_path = os.path.join(upper_dir, "output/noise/submission.csv")
+    submission_path = os.path.join(upper_dir, "open", "sample_submission.csv")
+
+    final_submission = ensemble_clean_noise(clean_path, noise_path, submission_path)
+    final_submission.to_csv(os.path.join(upper_dir, "output/final/submission.csv"), index=False)
 
 if __name__ == "__main__":
     
@@ -181,6 +218,7 @@ if __name__ == "__main__":
 
     os.makedirs(os.path.join(upper_dir, "output"), exist_ok=True) 
     os.makedirs(os.path.join(upper_dir, "output", "noise"), exist_ok=True) 
-    os.makedirs(os.path.join(upper_dir, "output", "clean"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "output", "clean"), exist_ok=True)
+    os.makedirs(os.path.join(upper_dir, "output", "final"), exist_ok=True)
 
     main(args)
