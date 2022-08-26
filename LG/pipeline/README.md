@@ -39,6 +39,7 @@ utils.py : utils func
 numpy
 pandas
 tqdm
+scikit-learn
 lightgbm==3.3.2
 xgboost==1.6.1
 catboost==1.0.6
