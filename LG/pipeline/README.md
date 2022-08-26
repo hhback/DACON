@@ -15,9 +15,15 @@ $ (pyenv) pip install -r requirements.txt
 ``` 
 3. Run Shell
 ``` 
-$ (pyenv) sh ./bin/run
+$ (pyenv) sh ./run
 ``` 
 
+or
+
+``` 
+$ (pyenv) python ./src/preprocess.py
+$ (pyenv) python ./src/train.py
+``` 
 
 ### 2. py file
 ```
