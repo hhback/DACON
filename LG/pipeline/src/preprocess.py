@@ -45,6 +45,7 @@ feature_regressor = MultiOutputRegressor(
         random_state=seed,
     )
 )
+
 def save_pickle(base_path, X_train, X_test, y_train):
 
     save_df_list = [X_train, X_test, y_train]
@@ -66,6 +67,7 @@ def main():
     smoothing = SmoothingTransform(
     X_train=X_train_df, y_train=y_train_df, X_test=X_test_df, search_max_value=5000
     )
+
     lowpass = ByLowPassTransform(
     X_train=X_train_df, y_train=y_train_df, X_test=X_test_df, max_N=10
     )
@@ -78,22 +80,32 @@ def main():
     smoothing.serach_best_param_by_corr()
     lowpass.serach_best_param()
 
+    # Exponential Smoothing & Moving Average DataFrame by feature importance
     ft_smoothing_X_train = smoothing.data_transform("train", "ft")
     ft_smoothing_X_test = smoothing.data_transform("test", "ft")
+
+    # Exponential Smoothing & Moving Average DataFrame by correlation
     corr_smoothing_X_train = smoothing.data_transform("train", "corr")
     corr_smoothing_X_test = smoothing.data_transform("test", "corr")
+
+    # lowpass smoothing by correlation
     lowpass_X_train = lowpass.data_transform("train")
     lowpass_X_test = lowpass.data_transform("test")
+
+    # raw scale -> standard scale -> fourier transform 
     scale_fft_X_train = fourier.data_transform("train", "scale")
     scale_fft_X_test = fourier.data_transform("test", "scale")
+    # raw scale -> fourier transform 
     raw_fft_X_train = fourier.data_transform("train", "raw")
     raw_fft_X_test = fourier.data_transform("test", "raw")
 
+    # Make noise dataframe (all feature + Exponential Smoothing & Moving Average DataFrame by feature importance)
     noise_X_train_df = pd.concat([X_train_df, ft_smoothing_X_train, lowpass_X_train, scale_fft_X_train, raw_fft_X_train,], axis=1)
     noise_X_test_df = pd.concat([X_test_df, ft_smoothing_X_test, lowpass_X_test, scale_fft_X_test, raw_fft_X_test,], axis=1)
     print(noise_X_train_df.shape, noise_X_test_df.shape)
     save_pickle(os.path.join(upper_dir, "refine", "noise"), noise_X_train_df, noise_X_test_df, y_train_df)
 
+    # Make clean dataframe (all feature + Exponential Smoothing & Moving Average DataFrame by correlation)
     clean_X_train_df = pd.concat([X_train_df, corr_smoothing_X_train, lowpass_X_train, scale_fft_X_train, raw_fft_X_train,], axis=1)
     clean_X_test_df = pd.concat([X_test_df, corr_smoothing_X_test, lowpass_X_test, scale_fft_X_test, raw_fft_X_test,], axis=1)
     print(clean_X_train_df.shape, clean_X_test_df.shape)
