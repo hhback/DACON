@@ -192,15 +192,14 @@ def main(args):
             else:
                 submission.to_csv(os.path.join(upper_dir, "output/clean/submission.csv"), index=False)
 
+            clean_path = os.path.join(upper_dir, "output/clean/submission.csv")
+            noise_path = os.path.join(upper_dir, "output/noise/submission.csv")
+            submission_path = os.path.join(upper_dir, "open", "sample_submission.csv")
+            final_submission = ensemble_clean_noise(clean_path, noise_path, submission_path)
+            final_submission.to_csv(os.path.join(upper_dir, "output/final/submission.csv"), index=False)
+
         else:
             print("You must enter mode as inference or experiment.")
-
-    clean_path = os.path.join(upper_dir, "output/clean/submission.csv")
-    noise_path = os.path.join(upper_dir, "output/noise/submission.csv")
-    submission_path = os.path.join(upper_dir, "open", "sample_submission.csv")
-
-    final_submission = ensemble_clean_noise(clean_path, noise_path, submission_path)
-    final_submission.to_csv(os.path.join(upper_dir, "output/final/submission.csv"), index=False)
 
 if __name__ == "__main__":
     
