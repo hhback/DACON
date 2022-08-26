@@ -1,5 +1,6 @@
 numpy
 pandas
+scikit-learn
 tqdm
 lightgbm==3.3.2
 xgboost==1.6.1
