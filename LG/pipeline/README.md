@@ -30,5 +30,10 @@ utils.py : utils func
 
 #### 3. requirements.txt
 ```
-run.sh : run this shell file
+numpy
+pandas
+tqdm
+lightgbm==3.3.2
+xgboost==1.6.1
+catboost==1.0.6
 ```
