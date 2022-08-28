@@ -13,9 +13,10 @@ $ source ./pyenv/bin/activate
 $ (pyenv) pip install --upgrade pip
 $ (pyenv) pip install -r requirements.txt 
 ``` 
-3. Run Shell
+3. Train Run Shell
+
 ``` 
-$ (pyenv) sh ./run
+$ (pyenv) sh ./train.sh
 ``` 
 
 or
@@ -25,6 +26,18 @@ $ (pyenv) python ./src/preprocess.py
 $ (pyenv) python ./src/train.py
 ``` 
 
+4. Inference Run Shell
+``` 
+$ (pyenv) sh ./inference.sh
+``` 
+
+or
+
+``` 
+$ (pyenv) python ./src/preprocess.py
+$ (pyenv) python ./src/inference.py
+``` 
+
 ### 2. py file
 ```
 feature.py : feature engineering class
@@ -32,6 +45,7 @@ model.py : model class
 preprocess.py : preprocess activate code
 train.py : train activate code
 utils.py : utils func
+inference.py : inference activate code
 ```
 
 ### 3. requirements.txt
