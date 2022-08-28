@@ -14,6 +14,7 @@ $ (pyenv) pip install --upgrade pip
 $ (pyenv) pip install -r requirements.txt 
 ``` 
 3. Train Run Shell
+
 ``` 
 $ (pyenv) sh ./train.sh
 ``` 
@@ -29,6 +30,8 @@ $ (pyenv) python ./src/train.py
 ``` 
 $ (pyenv) sh ./inference.sh
 ``` 
+
+or
 
 ``` 
 $ (pyenv) python ./src/preprocess.py
