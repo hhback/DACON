@@ -7,4 +7,6 @@ HOMEDIR="`dirname "$script"`"
 source ${HOMEDIR}/pyenv/bin/activate
 
 python ${HOMEDIR}/src/preprocess.py
-#python ${HOMEDIR}/src/train.py
+rm -rf ${HOMEDIR}/model
+python ${HOMEDIR}/src/train.py
+python ${HOMEDIR}/src/inference.py
