@@ -54,6 +54,28 @@ def save_pickle(base_path, X_train, X_test, y_train):
     for file, name in zip(save_df_list, save_df_name):
         file.to_pickle(os.path.join(base_path, name))
 
+def save_npy(base_path, X_train, X_test, y_train):
+    
+    save_npy_list = [X_train, X_test, y_train]
+    save_npy_name = ["X_train_df.npy", "X_test_df.npy", "y_train_df.npy"]
+
+    for npy, name in zip(save_npy_list, save_npy_name):
+        np.save(os.path.join(base_path, name), npy)
+
+def scaling_datasets(datasets, scaler):
+        
+    X_train = datasets[0]
+    X_test = datasets[1]
+    y_train = datasets[2]
+
+    X_train = pd.get_dummies(X_train, drop_first=True)
+    X_test = pd.get_dummies(X_test, drop_first=True)
+
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    return X_train, X_test, y_train.values
+
 def main():
 
     X_df, X_train_df, y_train_df, X_test_df = split_dataset(train, test)
@@ -103,14 +125,20 @@ def main():
     noise_X_train_df = pd.concat([X_train_df, ft_smoothing_X_train, lowpass_X_train, scale_fft_X_train, raw_fft_X_train,], axis=1)
     noise_X_test_df = pd.concat([X_test_df, ft_smoothing_X_test, lowpass_X_test, scale_fft_X_test, raw_fft_X_test,], axis=1)
     print(noise_X_train_df.shape, noise_X_test_df.shape)
-    save_pickle(os.path.join(upper_dir, "refine", "noise"), noise_X_train_df, noise_X_test_df, y_train_df)
+    save_pickle(os.path.join(upper_dir, "refine/noise", "raw"), noise_X_train_df, noise_X_test_df, y_train_df)
 
+    scale_noise_X_train_df, scale_noise_X_test_df, scale_y_train_df = scaling_datasets([noise_X_train_df, noise_X_test_df, y_train_df], sd_scaler)
+    save_npy(os.path.join(upper_dir, "refine/noise", "scale"), scale_noise_X_train_df, scale_noise_X_test_df, scale_y_train_df)
+    
     # Make clean dataframe (all feature + Exponential Smoothing & Moving Average DataFrame by correlation)
     clean_X_train_df = pd.concat([X_train_df, corr_smoothing_X_train, lowpass_X_train, scale_fft_X_train, raw_fft_X_train,], axis=1)
     clean_X_test_df = pd.concat([X_test_df, corr_smoothing_X_test, lowpass_X_test, scale_fft_X_test, raw_fft_X_test,], axis=1)
     print(clean_X_train_df.shape, clean_X_test_df.shape)
-    save_pickle(os.path.join(upper_dir, "refine", "clean"), clean_X_train_df, clean_X_test_df, y_train_df)
+    save_pickle(os.path.join(upper_dir, "refine/clean", "raw"), clean_X_train_df, clean_X_test_df, y_train_df)
 
+    scale_clean_X_train_df, scale_clean_X_test_df, scale_y_clean_df = scaling_datasets([clean_X_train_df, clean_X_test_df, y_train_df], sd_scaler)
+    save_npy(os.path.join(upper_dir, "refine/clean", "scale"), scale_clean_X_train_df, scale_clean_X_test_df, scale_y_clean_df)
+    
 if __name__ == "__main__":
 
     train = pd.read_csv(os.path.join(upper_dir, "open", "train.csv")).drop(
@@ -123,6 +151,10 @@ if __name__ == "__main__":
 
     os.makedirs(os.path.join(upper_dir, "refine"), exist_ok=True) 
     os.makedirs(os.path.join(upper_dir, "refine", "noise"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "refine", "noise", "raw"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "refine", "noise", "scale"), exist_ok=True) 
     os.makedirs(os.path.join(upper_dir, "refine", "clean"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "refine", "clean", "raw"), exist_ok=True) 
+    os.makedirs(os.path.join(upper_dir, "refine", "clean", "scale"), exist_ok=True) 
 
     main()

@@ -85,7 +85,7 @@ def parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scaler", default="standard", type=str)
     parser.add_argument('--n_cv', type=int, default=10)
-    parser.add_argument("--mode", type=str, default="inference", help="inference or experiment")
+    parser.add_argument("--mode", type=str, default="train", help="train or experiment")
 
     return parser.parse_args()
 
@@ -119,23 +119,6 @@ def make_datasets(datasets, scaler, mode, seed):
 
         return X_train, X_test, y_train
 
-def ensemble_clean_noise(clean_path, noise_path, submission_path):
-    
-    clean = pd.read_csv(clean_path)
-    noise = pd.read_csv(noise_path)
-    submission = pd.read_csv(submission_path)
-
-    ensemble_result = np.mean(
-        np.array([clean.iloc[:, 1:].values, noise.iloc[:, 1:].values]), axis=0
-    ).round(3)
-
-    for idx, col in enumerate(submission.columns):
-        if col == "ID":
-            continue
-        submission[col] = ensemble_result[:, idx - 1]
-
-    return submission
-
 def main(args):
 
     n_cv = args.n_cv
@@ -165,38 +148,25 @@ def main(args):
             # For the noise dataset, it was best to use catboost,
             # For the clean dataset, it was best to use catboost, lightgbm, and ets.
 
-        elif mode == "inference":
+        elif mode == "train":
+            
+            best_ml = [catboost, ]
+            level0_save_path = os.path.join(noise_model_path, "level0")
+            level1_save_path = os.path.join(noise_model_path, "level1")
         
-            if order == 0:
-                best_ml = [catboost]
-            else:
+            if order == 1:
                 best_ml = [catboost, lightgbm, ets,]
+                level0_save_path = os.path.join(clean_model_path, "level0")
+                level1_save_path = os.path.join(clean_model_path, "level1")
 
             print("Inference Start..")
             X_train, X_test, y_train = make_datasets(datasets, scaler, "real", seed)
             inference_stacking = STACKING(X_train, X_test, y_train, "_", best_ml, len(best_ml), seed, "real")
-            
-            inference_stacking.run_level0()
-            prediction = inference_stacking.run_level1()
+
+            inference_stacking.run_level0(save_path = level0_save_path)
+            prediction = inference_stacking.run_level1(save = True, save_path = level1_save_path)
             result = prediction.round(3)
-
-            submission = pd.read_csv(os.path.join(upper_dir, "open", "sample_submission.csv"))
-
-            for idx, col in enumerate(submission.columns):
-                if col == "ID":
-                    continue
-                submission[col] = result[:, idx - 1]
-            
-            if order == 0:
-                submission.to_csv(os.path.join(upper_dir, "output/noise/submission.csv"), index=False)
-            else:
-                submission.to_csv(os.path.join(upper_dir, "output/clean/submission.csv"), index=False)
-
-            clean_path = os.path.join(upper_dir, "output/clean/submission.csv")
-            noise_path = os.path.join(upper_dir, "output/noise/submission.csv")
-            submission_path = os.path.join(upper_dir, "open", "sample_submission.csv")
-            final_submission = ensemble_clean_noise(clean_path, noise_path, submission_path)
-            final_submission.to_csv(os.path.join(upper_dir, "output/final/submission.csv"), index=False)
+            print(result)
 
         else:
             print("You must enter mode as inference or experiment.")
@@ -205,19 +175,26 @@ if __name__ == "__main__":
     
     args = parser()
 
-    noise_X_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise", "X_train_df.pkl"))
-    noise_X_test_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise", "X_test_df.pkl"))
-    noise_y_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise", "y_train_df.pkl"))
+    noise_X_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise/raw", "X_train_df.pkl"))
+    noise_X_test_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise/raw", "X_test_df.pkl"))
+    noise_y_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/noise/raw", "y_train_df.pkl"))
     noise_datasets = [noise_X_train_df, noise_y_train_df, noise_X_test_df,]
 
-    clean_X_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean", "X_train_df.pkl"))
-    clean_X_test_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean", "X_test_df.pkl"))
-    clean_y_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean", "y_train_df.pkl"))
+    clean_X_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean/raw", "X_train_df.pkl"))
+    clean_X_test_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean/raw", "X_test_df.pkl"))
+    clean_y_train_df = pd.read_pickle(os.path.join(upper_dir, "refine/clean/raw", "y_train_df.pkl"))
     clean_datasets = [clean_X_train_df, clean_y_train_df, clean_X_test_df, ]
 
-    os.makedirs(os.path.join(upper_dir, "output"), exist_ok=True) 
-    os.makedirs(os.path.join(upper_dir, "output", "noise"), exist_ok=True) 
-    os.makedirs(os.path.join(upper_dir, "output", "clean"), exist_ok=True)
-    os.makedirs(os.path.join(upper_dir, "output", "final"), exist_ok=True)
+    noise_model_path = os.path.join(upper_dir, "model", "noise")
+    clean_model_path = os.path.join(upper_dir, "model", "clean")
+
+    os.makedirs(os.path.join(upper_dir, "model"), exist_ok=True) 
+    os.makedirs(noise_model_path, exist_ok=True) 
+    os.makedirs(clean_model_path, exist_ok=True)
+
+    os.makedirs(os.path.join(noise_model_path, "level0"), exist_ok=True)
+    os.makedirs(os.path.join(noise_model_path, "level1"), exist_ok=True)
+    os.makedirs(os.path.join(clean_model_path, "level0"), exist_ok=True)
+    os.makedirs(os.path.join(clean_model_path, "level1"), exist_ok=True)
 
     main(args)
