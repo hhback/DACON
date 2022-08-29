@@ -40,11 +40,11 @@ $ (pyenv) python ./src/inference.py
 
 ### 2. py file
 ```
-feature.py : feature engineering class
-model.py : model class
+feature.py : feature engineering class py
+model.py : model class py
 preprocess.py : preprocess activate code
 train.py : train activate code
-utils.py : utils func
+utils.py : utils func py
 inference.py : inference activate code
 ```
 
