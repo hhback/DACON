@@ -3,17 +3,17 @@
 ### 1. Setting Environment
 - python version >= 3.6
 
-1. Make virtual env
+#### 1. Make virtual env
 ``` 
 $ python3 -m venv pyenv
 $ source ./pyenv/bin/activate
 ``` 
-2. Install requirements
+#### 2. Install requirements
 ``` 
 $ (pyenv) pip install --upgrade pip
 $ (pyenv) pip install -r requirements.txt 
 ``` 
-3. Train Run Shell
+#### 3. Train Run Shell
 
 ``` 
 $ (pyenv) sh ./train.sh
@@ -26,7 +26,7 @@ $ (pyenv) python ./src/preprocess.py
 $ (pyenv) python ./src/train.py
 ``` 
 
-4. Inference Run Shell
+#### 4. Inference Run Shell
 ``` 
 $ (pyenv) sh ./inference.sh
 ``` 
