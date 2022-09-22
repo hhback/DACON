@@ -31,6 +31,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 upper_dir = os.path.join(current_dir, os.pardir)
 args = parser()
 
+print(args)
+
 optimizer = args.optimizer
 learning_rate = args.learning_rate
 loss = args.loss
@@ -130,12 +132,12 @@ def main():
         include_targets=True,
     )
 
-    img_side = image_model(image_pretrained_model)
+    img_side = image_model(image_pretrained_model, IMAGE_SIZE)
     text_side = text_model(pretrained_bert, MAX_LENGTH)
     multi_side = mutlitmodal_model(img_side, text_side, IMAGE_SIZE, MAX_LENGTH, NUM_CLASS)
 
-    print(img_side.summary())
-    print(text_side.summary())
+    # print(img_side.summary())
+    # print(text_side.summary())
     print(multi_side.summary())
 
     multi_side.compile(

@@ -2,14 +2,15 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras import models
 
-def image_model(image_pretrained_model):
+def image_model(image_pretrained_model, image_size):
     
-    model_cnn = models.Sequential()
-    model_cnn.add(image_pretrained_model)
-    model_cnn.add(layers.AveragePooling2D(pool_size=(8, 8), name="AVG_Pooling"))
-    model_cnn.add(layers.Dropout(0.4, name="Dropout_0.4"))
-    model_cnn.add(layers.Flatten(name="Flatten"))
-    model_cnn.add(layers.Dense(128, name="Dense_128"))
+    input_image = layers.Input(
+        shape=(image_size, image_size, 3), dtype=tf.float32, name="image"
+    )
+
+    backbone_cnn = image_pretrained_model(input_image)
+    pooling = layers.GlobalAveragePooling2D()(backbone_cnn)
+    model_cnn = tf.keras.models.Model(inputs=[input_image], outputs=pooling)
 
     for layer in model_cnn.layers:
         layer.trainable = True
@@ -38,9 +39,10 @@ def text_model(pretrained_bert, max_length):
         input_ids, attention_mask=attention_masks, token_type_ids=token_type_ids
     )
     x = bert_output.last_hidden_state
-    output = layers.LSTM(128, name='LSTM')(x)
+    pooling = tf.keras.layers.GlobalAveragePooling1D()(x)
+
     model_lstm = tf.keras.models.Model(
-        inputs=[input_ids, attention_masks, token_type_ids], outputs=output
+        inputs=[input_ids, attention_masks, token_type_ids], outputs=pooling
     )
     
     for layer in model_lstm.layers:
@@ -59,12 +61,12 @@ def mutlitmodal_model(image, text, image_size, max_length, num_class):
     segment_ids = layers.Input(shape=(max_length,), dtype=tf.int32,
                                         name="segment_ids")
 
-    image_side = image(image_input)
+    image_side = image(image_input, image_size)
     text_side = text([input_word_ids, input_mask, segment_ids])
 
     # Concatenate features from images and texts
     merged = layers.Concatenate()([image_side, text_side])
-    merged = layers.Dense(256, activation = 'relu')(merged)
+    #merged = layers.Dense(256, activation = 'relu')(merged)
     output = layers.Dense(num_class, activation='softmax', name = "class")(merged)
     
     model_multi = models.Model([

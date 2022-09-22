@@ -17,7 +17,7 @@ def parser():
     parser.add_argument("--validation_size", default=0.1, type=float)
     parser.add_argument("--seed", default=1011, type=int)
 
-    return parser.parse_args("")
+    return parser.parse_args()
 
 if __name__ == '__main__':
 
