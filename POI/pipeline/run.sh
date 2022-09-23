@@ -6,8 +6,10 @@ image_pretrained_model=InceptionV3
 batch_size=8
 image_size=420
 max_length=100
+mode=train
 
 python main.py \
+        --mode ${mode} \
 	--text_pretrained_model ${text_pretrained_model} \
         --image_pretrained_model ${image_pretrained_model} \
         --batch_size ${batch_size} \

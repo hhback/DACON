@@ -10,7 +10,9 @@ def image_model(image_pretrained_model, image_size):
 
     backbone_cnn = image_pretrained_model(input_image)
     pooling = layers.GlobalAveragePooling2D()(backbone_cnn)
-    model_cnn = tf.keras.models.Model(inputs=[input_image], outputs=pooling)
+    output = layers.Dense(1024)(pooling)
+    
+    model_cnn = tf.keras.models.Model(inputs=[input_image], outputs=output)
 
     for layer in model_cnn.layers:
         layer.trainable = True

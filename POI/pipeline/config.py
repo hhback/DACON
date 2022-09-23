@@ -14,6 +14,7 @@ def parser():
     parser.add_argument("--image_size", default=299, type=int)
     parser.add_argument("--max_length", default=50, type=int)
     parser.add_argument("--epochs", default=100, type=int)
+    parser.add_argument("--mode", default="train", type=str)
     parser.add_argument("--validation_size", default=0.1, type=float)
     parser.add_argument("--seed", default=1011, type=int)
 
