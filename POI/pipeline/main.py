@@ -1,7 +1,9 @@
+from genericpath import exists
 import os
 import random
 import numpy as np
 import pandas as pd
+from tqdm import trange
 
 import warnings
 
@@ -40,6 +42,7 @@ label_smoothing = args.label_smoothing
 BATCH_SIZE = args.batch_size
 IMAGE_SIZE = args.image_size
 EPOCHS = args.epochs
+mode = args.mode
 validation_size = args.validation_size
 MAX_LENGTH = args.max_length
 seed = args.seed
@@ -88,11 +91,13 @@ def set_seeds(seed=seed):
 def main():
     
     os.chdir(os.path.join(upper_dir, "data"))
+    os.makedirs(os.path.join(upper_dir, "submission"), exist_ok=True)
 
     set_seeds()
 
-    train_df = pd.read_csv(os.path.join("pp_train.csv"))
+    train_df = pd.read_csv("./pp_train.csv")
     test_df = pd.read_csv("./pp_test.csv")
+    submission = pd.read_csv("./sample_submission.csv")
 
     le = LabelEncoder()
     le.fit(train_df["cat3"].values)
@@ -101,6 +106,7 @@ def main():
     train_df["cat3"] = le.transform(train_df["cat3"].values)
 
     X_test = test_df[["img_path", "overview"]]
+    
     X, y = train_df[["img_path", "overview"]], tf.keras.utils.to_categorical(train_df["cat3"])
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=validation_size, random_state=seed, stratify=y
@@ -128,7 +134,7 @@ def main():
         labels = y_val,
         batch_size=BATCH_SIZE,
         seed = seed,
-        shuffle=True,
+        shuffle=False,
         include_targets=True,
     )
 
@@ -158,20 +164,49 @@ def main():
             restore_best_weights=True,
         ),
         tf.keras.callbacks.ModelCheckpoint(
-            "../MULTI_PRETRAINED",
+            os.path.join(upper_dir, "load_model", "multimodal"),
             monitor="val_loss",
             save_best_only=True,
             save_weights_only=True,
         ),
     ]
 
-    history = multi_side.fit(
-        train_ds,
-        validation_data=val_ds,
-        verbose=True,
-        epochs=EPOCHS,
-        callbacks=[checkpoint_callback],
+    if mode == "train":
+        history = multi_side.fit(
+            train_ds,
+            validation_data=val_ds,
+            verbose=True,
+            epochs=EPOCHS,
+            callbacks=[checkpoint_callback],
+        )
+
+    multi_side.load_weights(os.path.join(upper_dir, "load_model", "multimodal"))
+
+    multi_side.evaluate(val_ds)
+
+    test_ds = DataGenerator(
+        img_path_list = X_test['img_path'].values,
+        img_size = IMAGE_SIZE,
+        sentence = X_test['overview'].values,
+        max_length = MAX_LENGTH,
+        tokenizer = tokenizer,
+        labels = None,
+        batch_size=10,
+        seed = seed,
+        shuffle=False,
+        include_targets=False,
     )
+
+    trial = test_ds.__len__()
+    
+    pred = []
+
+    for idx in trange(trial):
+        pred.append(multi_side.predict(test_ds.__getitem__(idx)))
+
+    y_pred = np.concatenate(pred).argmax(axis=1)
+    submission["cat3"] = le.inverse_transform(y_pred)
+    submission.to_csv(os.path.join(upper_dir, "submission", "submission.csv"), index=False, encoding = "utf-8-sig")
 
 if __name__ == "__main__":
 
